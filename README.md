@@ -1,1 +1,1 @@
-# factory-frontend
+# factory-module
