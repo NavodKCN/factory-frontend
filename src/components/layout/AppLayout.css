@@ -67,3 +67,36 @@
   flex-direction: column;
   overflow: hidden;
 }
+
+/* ── Responsive nav ──────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .app-nav {
+    padding: 0 var(--space-3);
+    height: 52px;
+  }
+
+  .app-nav__brand-name {
+    font-size: var(--text-sm);
+    letter-spacing: 0.08em;
+  }
+
+  .app-nav__logo {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+/* On split-layout pages the main must be able to grow without overflow issues */
+@media (min-width: 769px) {
+  .app-main {
+    overflow: hidden;
+    height: calc(100vh - var(--header-height));
+  }
+}
+
+@media (max-width: 768px) {
+  .app-main {
+    overflow: visible;
+    height: auto;
+  }
+}

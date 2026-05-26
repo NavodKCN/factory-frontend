@@ -3,6 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ORDERS, ARTICLES } from '../../data/ordersData';
 import './orders.css';
 
+// ─── JSON-RPC stub (ready for Odoo integration) ──────────────────────────────
+// Replace with real rpc.call(model, method, args) when backend is available
+const api = {
+  fetchOrder:   async (id)     => ORDERS.find(o => o.id === Number(id)),
+  confirmReceive: async (/*payload*/) => { /* POST to /web/dataset/call_kw */ },
+};
+
 // ─── helpers ────────────────────────────────────────────────────────────────
 function formatDate(iso) {
   if (!iso) return '';
@@ -16,18 +23,18 @@ function getArticle(id) {
 
 // ─── component ──────────────────────────────────────────────────────────────
 export default function ReceiveOrderPage() {
-  const { id } = useParams();
+  const { id }   = useParams();
   const navigate = useNavigate();
 
   const order = ORDERS.find(o => o.id === Number(id));
 
-  const [loadDate, setLoadDate] = useState('');
+  const [loadDate,  setLoadDate]  = useState('');
   const [ddtNumber, setDdtNumber] = useState('');
-  const [ddtDate, setDdtDate] = useState('');
+  const [ddtDate,   setDdtDate]   = useState('');
   const [suppPrice, setSuppPrice] = useState('');
-  const [search, setSearch] = useState('');
+  const [search,    setSearch]    = useState('');
 
-  // received/accepted quantities — keyed by articleId
+  // received / accepted quantities — keyed by articleId
   const [received, setReceived] = useState(() => {
     if (!order) return {};
     return Object.fromEntries(order.items.map(i => [i.articleId, i.units]));
@@ -54,23 +61,45 @@ export default function ReceiveOrderPage() {
     return sum + (art ? acc * item.unitCost : 0);
   }, 0);
 
-  // Catalogue side: all articles in the order (could filter by search)
   const catalogueItems = order.items.filter(item => {
     if (!search) return true;
     const art = getArticle(item.articleId);
     if (!art) return true;
-    return art.name.toLowerCase().includes(search.toLowerCase()) || art.code.toLowerCase().includes(search.toLowerCase());
+    return (
+      art.name.toLowerCase().includes(search.toLowerCase()) ||
+      art.code.toLowerCase().includes(search.toLowerCase())
+    );
   });
+
+  const handleConfirm = async () => {
+    // Stub: build payload for future Odoo JSON-RPC call
+    const payload = {
+      orderId:   order.id,
+      loadDate,
+      ddtNumber,
+      ddtDate,
+      suppPrice,
+      lines: order.items.map(item => ({
+        articleId: item.articleId,
+        received:  Number(received[item.articleId] ?? 0),
+        accepted:  Number(accepted[item.articleId] ?? 0),
+        unitCost:  item.unitCost,
+      })),
+    };
+    await api.confirmReceive(payload);
+    navigate('/orders');
+  };
 
   return (
     <div className="page-root page-root--split">
+
       {/* ── Top bar ── */}
       <div className="orders-topbar">
         <div className="orders-topbar__left">
           <h1 className="page-title">ORDINE #{String(order.id).padStart(4, '0')}</h1>
           <span className="page-subtitle">
-            Fornitore: <strong>{order.supplierName}</strong>
-            &nbsp;·&nbsp;Rich. consegna: <strong>{formatDate(order.requestedDelivery)}</strong>
+            Fornitore:&nbsp;<strong>{order.supplierName}</strong>
+            &nbsp;·&nbsp;Rich. consegna:&nbsp;<strong>{formatDate(order.requestedDelivery)}</strong>
           </span>
         </div>
         <div className="orders-topbar__right">
@@ -82,28 +111,50 @@ export default function ReceiveOrderPage() {
       {/* ── DDT header fields ── */}
       <div className="ddt-fields-bar">
         <div className="ddt-field">
-          <button className="filter-icon-btn">📅</button>
-          <select className="filter-select filter-select--sm" value={loadDate} onChange={e => setLoadDate(e.target.value)}>
+          <button className="filter-icon-btn" title="Seleziona data carico">📅</button>
+          <select
+            className="filter-select filter-select--sm"
+            value={loadDate}
+            onChange={e => setLoadDate(e.target.value)}
+          >
             <option value="">Data carico</option>
           </select>
         </div>
+
         <div className="ddt-field">
-          <input className="ddt-input" placeholder="Numero bolla" value={ddtNumber} onChange={e => setDdtNumber(e.target.value)} />
+          <input
+            className="ddt-input"
+            placeholder="Numero bolla"
+            value={ddtNumber}
+            onChange={e => setDdtNumber(e.target.value)}
+          />
         </div>
+
         <div className="ddt-field">
-          <button className="filter-icon-btn">📅</button>
-          <select className="filter-select filter-select--sm" value={ddtDate} onChange={e => setDdtDate(e.target.value)}>
+          <button className="filter-icon-btn" title="Seleziona data bolla">📅</button>
+          <select
+            className="filter-select filter-select--sm"
+            value={ddtDate}
+            onChange={e => setDdtDate(e.target.value)}
+          >
             <option value="">Data bolla</option>
           </select>
         </div>
+
         <div className="ddt-field">
-          <input className="ddt-input ddt-input--sm" placeholder="Imp. supp." value={suppPrice} onChange={e => setSuppPrice(e.target.value)} />
+          <input
+            className="ddt-input ddt-input--sm"
+            placeholder="Imp. supp."
+            value={suppPrice}
+            onChange={e => setSuppPrice(e.target.value)}
+          />
         </div>
       </div>
 
       {/* ── Split layout ── */}
       <div className="split-layout">
-        {/* ── LEFT: article list (order catalogue) ── */}
+
+        {/* LEFT: article catalogue ── */}
         <div className="split-layout__left">
           <div className="filter-bar filter-bar--compact">
             <input
@@ -131,7 +182,10 @@ export default function ReceiveOrderPage() {
               const art = getArticle(item.articleId);
               if (!art) return null;
               return (
-                <div key={item.articleId} className="article-row article-row--selected">
+                <div
+                  key={item.articleId}
+                  className="article-row article-row--receive article-row--selected"
+                >
                   <div className="article-row__info">
                     <span className="article-row__code">{art.code}</span>
                     <span className="article-row__name">{art.name}</span>
@@ -146,7 +200,9 @@ export default function ReceiveOrderPage() {
                       className="qty-input"
                       min="0"
                       value={received[item.articleId] ?? ''}
-                      onChange={e => setReceived(prev => ({ ...prev, [item.articleId]: e.target.value }))}
+                      onChange={e =>
+                        setReceived(prev => ({ ...prev, [item.articleId]: e.target.value }))
+                      }
                     />
                   </div>
                 </div>
@@ -155,77 +211,97 @@ export default function ReceiveOrderPage() {
           </div>
         </div>
 
-        {/* ── RIGHT: document panel ── */}
+        {/* RIGHT: document panel ── */}
         <div className="split-layout__right">
           <div className="doc-panel">
+
             <div className="doc-panel__header">
               <span className="doc-panel__title">DOCUMENTO</span>
               <span className="doc-panel__count">{order.items.length} items</span>
             </div>
 
-            {order.items.length > 0 && (
-              <table className="doc-table doc-table--receive">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Articolo</th>
-                    <th colSpan={2} className="th-group">Unità</th>
-                    <th colSpan={2} className="th-group">Costo</th>
-                  </tr>
-                  <tr className="doc-table__subheader">
-                    <th></th>
-                    <th></th>
-                    <th>Ricevuti</th>
-                    <th>Accettati</th>
-                    <th>Unita</th>
-                    <th>Tot</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {order.items.map((item, idx) => {
-                    const art = getArticle(item.articleId);
-                    if (!art) return null;
-                    const acc = Number(accepted[item.articleId] ?? 0);
-                    const lineTotal = acc * item.unitCost;
-                    return (
-                      <tr key={item.articleId}>
-                        <td>{idx + 1}</td>
-                        <td className="doc-table__art-name">{art.code} {art.name}</td>
-                        <td>
-                          <input
-                            type="number"
-                            className="qty-input qty-input--doc"
-                            min="0"
-                            value={received[item.articleId] ?? ''}
-                            onChange={e => setReceived(prev => ({ ...prev, [item.articleId]: e.target.value }))}
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            className="qty-input qty-input--doc"
-                            min="0"
-                            value={accepted[item.articleId] ?? ''}
-                            onChange={e => setAccepted(prev => ({ ...prev, [item.articleId]: e.target.value }))}
-                          />
-                        </td>
-                        <td className="doc-table__val">{item.unitCost.toFixed(2)}</td>
-                        <td className="doc-table__val">{lineTotal.toFixed(2)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td colSpan={5} className="doc-table__total-label">Totale</td>
-                    <td className="doc-table__total-val">{docTotal.toFixed(2)}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            )}
-
-            {order.items.length === 0 && (
+            {order.items.length === 0 ? (
               <div className="doc-panel__empty">Nessun articolo nel documento.</div>
+            ) : (
+              /* ── scrollable wrapper keeps the table inside the panel ── */
+              <div className="doc-panel__scroll">
+                <table className="doc-table doc-table--receive">
+                  {/* Fixed column widths — prevents overflow */}
+                  <colgroup>
+                    <col className="col-num"  />
+                    <col className="col-art"  />
+                    <col className="col-rcv"  />
+                    <col className="col-acc"  />
+                    <col className="col-unit" />
+                    <col className="col-tot"  />
+                  </colgroup>
+
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th className="th-art">Articolo</th>
+                      <th colSpan={2} className="th-group">Unità</th>
+                      <th colSpan={2} className="th-group">Costo</th>
+                    </tr>
+                    <tr className="doc-table__subheader">
+                      <th></th>
+                      <th className="th-art"></th>
+                      <th>Ric.</th>
+                      <th>Acc.</th>
+                      <th>Unit.</th>
+                      <th>Tot</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {order.items.map((item, idx) => {
+                      const art = getArticle(item.articleId);
+                      if (!art) return null;
+                      const acc       = Number(accepted[item.articleId] ?? 0);
+                      const lineTotal = acc * item.unitCost;
+                      return (
+                        <tr key={item.articleId}>
+                          <td>{idx + 1}</td>
+                          <td className="doc-table__art-name">
+                            {art.code}&nbsp;{art.name.substring(0, 14)}{art.name.length > 14 ? '…' : ''}
+                          </td>
+                          <td>
+                            <input
+                              type="number"
+                              className="qty-input qty-input--doc"
+                              min="0"
+                              value={received[item.articleId] ?? ''}
+                              onChange={e =>
+                                setReceived(prev => ({ ...prev, [item.articleId]: e.target.value }))
+                              }
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="number"
+                              className="qty-input qty-input--doc"
+                              min="0"
+                              value={accepted[item.articleId] ?? ''}
+                              onChange={e =>
+                                setAccepted(prev => ({ ...prev, [item.articleId]: e.target.value }))
+                              }
+                            />
+                          </td>
+                          <td className="doc-table__val">{item.unitCost.toFixed(2)}</td>
+                          <td className="doc-table__val">{lineTotal.toFixed(2)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+
+                  <tfoot>
+                    <tr>
+                      <td colSpan={5} className="doc-table__total-label">Totale</td>
+                      <td className="doc-table__total-val">{docTotal.toFixed(2)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             )}
           </div>
         </div>
@@ -236,7 +312,7 @@ export default function ReceiveOrderPage() {
         <button className="action-bar__back" onClick={() => navigate('/orders')}>←</button>
         <button
           className="action-bar__confirm"
-          onClick={() => navigate('/orders')}
+          onClick={handleConfirm}
           title="Conferma ricezione"
         >
           ✓
