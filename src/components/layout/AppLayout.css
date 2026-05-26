@@ -1,102 +1,322 @@
-.app-layout {
-  min-height: 100vh;
+/* ── Inventories List ─────────────────────────────────────── */
+
+.inv-list-page {
   display: flex;
   flex-direction: column;
+  min-height: calc(100vh - var(--header-height));
   background: var(--color-bg);
 }
 
-.app-nav {
-  height: var(--header-height);
-  background: var(--color-primary-dark);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 var(--space-5);
-  position: sticky;
-  top: 0;
-  z-index: 200;
-  box-shadow: var(--shadow-md);
+.inv-list-page__body {
+  flex: 1;
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-surface);
+  margin: var(--space-4) var(--space-6);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
 }
 
-.app-nav__brand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  color: var(--color-white);
-  text-decoration: none;
+.inv-id {
+  font-weight: var(--font-semibold);
+  color: var(--color-primary);
+  font-family: var(--font-mono);
 }
 
-.app-nav__logo {
-  width: 32px;
-  height: 32px;
-  background: var(--color-primary);
-  border-radius: var(--radius-md);
-  display: flex;
+.inv-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-white);
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+  color: var(--color-text-secondary);
 }
 
-.app-nav__brand-name {
-  font-size: var(--text-base);
-  font-weight: var(--font-bold);
-  letter-spacing: 0.12em;
-  color: var(--color-white);
+.inv-icon-btn:hover {
+  background: var(--color-border-light);
 }
 
-.app-nav__menu-link {
+.inv-icon-btn--success { color: var(--color-primary); }
+.inv-icon-btn--view    { color: var(--color-primary); }
+.inv-icon-btn--edit    { color: var(--color-text-secondary); }
+.inv-icon-btn--edit-green { color: var(--color-primary); }
+
+.inv-print-btn {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  color: rgba(255,255,255,0.8);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
   font-size: var(--text-sm);
   font-weight: var(--font-medium);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
-  transition: background var(--transition-fast), color var(--transition-fast);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
 }
 
-.app-nav__menu-link:hover {
-  background: rgba(255,255,255,0.12);
-  color: var(--color-white);
+.inv-print-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
-.app-main {
-  flex: 1;
+/* Sub-row (links below closed inventories) */
+.inv-subrow__td {
+  padding: 2px var(--space-4) var(--space-2);
+  background: var(--color-bg);
+}
+
+.inv-subrow__link {
+  font-size: var(--text-xs);
+  color: var(--color-primary);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.inv-subrow__sep {
+  margin: 0 var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+/* ── Inventory Entry ──────────────────────────────────────── */
+
+.inv-entry-page {
   display: flex;
   flex-direction: column;
+  min-height: calc(100vh - var(--header-height));
+  background: var(--color-bg);
+  padding-bottom: var(--action-bar-height);
+}
+
+.inv-entry__filters {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-6);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border-light);
+  flex-wrap: wrap;
+}
+
+.inv-entry__select {
+  height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  font-family: var(--font-sans);
+  min-width: 200px;
+  cursor: pointer;
+}
+
+.inv-entry__select:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.inv-entry__search-wrap {
+  flex: 1;
+  min-width: 180px;
+  max-width: 300px;
+}
+
+.inv-entry__search {
+  width: 100%;
+  height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  font-size: var(--text-sm);
+  font-family: var(--font-sans);
+  color: var(--color-text-primary);
+}
+
+.inv-entry__search:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.inv-entry__checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.inv-entry__checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.inv-entry__body {
+  flex: 1;
+  margin: var(--space-4) var(--space-6);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 
-/* ── Responsive nav ──────────────────────────────────────────────── */
-@media (max-width: 480px) {
-  .app-nav {
-    padding: 0 var(--space-3);
-    height: 52px;
-  }
-
-  .app-nav__brand-name {
-    font-size: var(--text-sm);
-    letter-spacing: 0.08em;
-  }
-
-  .app-nav__logo {
-    width: 28px;
-    height: 28px;
-  }
+.inv-entry__article-name {
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text-primary);
 }
 
-/* On split-layout pages the main must be able to grow without overflow issues */
-@media (min-width: 769px) {
-  .app-main {
-    overflow: hidden;
-    height: calc(100vh - var(--header-height));
+.inv-entry__article-code {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  margin-top: 2px;
+}
+
+.inv-entry__umxct {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+}
+
+.inv-entry__qty-input {
+  width: 80px;
+  height: 32px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  font-size: var(--text-sm);
+  font-family: var(--font-mono);
+  text-align: center;
+  color: var(--color-text-primary);
+  transition: border-color var(--transition-fast);
+}
+
+.inv-entry__qty-input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-primary-100);
+  background: var(--color-surface);
+}
+
+.inv-entry__qty-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* Hide number spinners */
+.inv-entry__qty-input::-webkit-inner-spin-button,
+.inv-entry__qty-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}
+
+@media (max-width: 640px) {
+  .inv-list-page__body { margin: var(--space-3); padding: var(--space-2); }
+  .inv-entry__filters  { padding: var(--space-3) var(--space-4); }
+  .inv-entry__body     { margin: var(--space-3); }
+  .inv-entry__select   { min-width: 100%; }
+}
+
+.inv-entry__th-narrow {
+  width: 100px;
+  text-align: center;
+}
+
+.inv-entry__td-center {
+  text-align: center;
+}
+
+@media (max-width: 960px) {
+  .inv-entry__filters {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .inv-entry__select {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 140px;
+  }
+
+  .inv-entry__search-wrap {
+    flex: 1 1 100%;
+  }
+
+  .inv-entry__th-narrow {
+    width: 80px;
   }
 }
 
 @media (max-width: 768px) {
-  .app-main {
-    overflow: visible;
-    height: auto;
+  .inv-entry-page {
+    padding-bottom: 80px;
+  }
+
+  .inv-entry__filters {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .inv-entry__select {
+    flex: 1 1 100%;
+  }
+
+  .inv-entry__body {
+    padding: 0 8px;
+  }
+
+  .data-table-wrap {
+    overflow-x: auto;
+  }
+
+  .inv-entry__th-narrow {
+    width: 70px;
+  }
+
+  .inv-entry__qty-input {
+    width: 58px;
+  }
+}
+
+@media (max-width: 480px) {
+  .inv-entry__th-narrow {
+    width: 60px;
+  }
+
+  .inv-entry__qty-input {
+    width: 50px;
+    font-size: 13px;
+  }
+
+  .inv-entry__article-name {
+    font-size: 12px;
+  }
+
+  .inv-entry__article-code {
+    font-size: 10px;
+  }
+
+  .inv-list-page {
+    padding-bottom: 16px;
+  }
+
+  .data-table {
+    font-size: 12px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 8px 6px;
   }
 }

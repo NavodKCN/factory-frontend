@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { articles, getDayName, formatDate } from '../../data/mockData';
+import { saveWasteEntry } from '../../services/api';
 import PageHeader from '../../components/common/PageHeader';
 import ActionBar from '../../components/common/ActionBar';
 import './waste.css';
@@ -14,16 +15,13 @@ const WasteEntryPage = () => {
 
   const [activeTab, setActiveTab] = useState('INVENDUTO');
   const [search, setSearch] = useState('');
+  const [saving, setSaving] = useState(false);
 
   // Waste document state — keyed by tab
   const [wasteDoc, setWasteDoc] = useState({
     INVENDUTO:  [],
     PRODUZIONE: [],
   });
-
-  // Counts for tab badges
-  const invendutoCount  = wasteDoc.INVENDUTO.length;
-  const produzioneCount = wasteDoc.PRODUZIONE.length;
 
   // Filtered article list (left panel)
   const filteredArticles = articles.filter((a) =>
@@ -36,7 +34,7 @@ const WasteEntryPage = () => {
   const handleArticleClick = (article) => {
     setWasteDoc((prev) => {
       const existing = prev[activeTab].find((i) => i.articleId === article.id);
-      if (existing) return prev; // already added
+      if (existing) return prev;
       return {
         ...prev,
         [activeTab]: [
@@ -47,7 +45,6 @@ const WasteEntryPage = () => {
     });
   };
 
-  // Update quantity in document
   const handleQtyChange = (articleId, value) => {
     setWasteDoc((prev) => ({
       ...prev,
@@ -57,12 +54,25 @@ const WasteEntryPage = () => {
     }));
   };
 
-  // Remove item from document
   const handleRemove = (articleId) => {
     setWasteDoc((prev) => ({
       ...prev,
       [activeTab]: prev[activeTab].filter((i) => i.articleId !== articleId),
     }));
+  };
+
+  // ── JSON-RPC stub ──────────────────────────────────────────────────────────
+  const handleConfirm = async () => {
+    setSaving(true);
+    try {
+      await saveWasteEntry(date, {
+        invenduto:  wasteDoc.INVENDUTO.map(i => ({ articleId: i.articleId, qty: Number(i.qty) })),
+        produzione: wasteDoc.PRODUZIONE.map(i => ({ articleId: i.articleId, qty: Number(i.qty) })),
+      });
+      alert('Scarto salvato');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const currentDoc = wasteDoc[activeTab];
@@ -96,8 +106,6 @@ const WasteEntryPage = () => {
 
         {/* LEFT — article list */}
         <div className="waste-entry__left">
-
-          {/* Search */}
           <div className="waste-entry__search-wrap">
             <svg className="waste-entry__search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -111,14 +119,12 @@ const WasteEntryPage = () => {
             />
           </div>
 
-          {/* Article table header */}
           <div className="waste-entry__article-header">
             <span className="waste-entry__article-header-name">Articolo</span>
             <span className="waste-entry__article-header-um">UM2</span>
             <span className="waste-entry__article-header-qty">Quantita'</span>
           </div>
 
-          {/* Article rows */}
           <div className="waste-entry__article-list">
             {filteredArticles.map((article) => {
               const inDoc = currentDoc.find((i) => i.articleId === article.id);
@@ -154,65 +160,61 @@ const WasteEntryPage = () => {
 
         {/* RIGHT — document panel */}
         <div className="waste-entry__right">
-          <div className="waste-entry__doc-header">
-            <span className="waste-entry__doc-title">
-              SCARTO {activeTab}
-            </span>
-            <span className="waste-entry__doc-count">{currentDoc.length} items</span>
-          </div>
-
-          {currentDoc.length === 0 ? (
-            <div className="waste-entry__doc-empty">
-              <EmptyIcon />
-              <span>Nessun articolo aggiunto</span>
-              <span className="waste-entry__doc-empty-hint">
-                Clicca un articolo a sinistra per aggiungerlo
-              </span>
+          <div className="waste-entry__doc-panel">
+            <div className="waste-entry__doc-header">
+              <span className="waste-entry__doc-title">SCARTO {activeTab}</span>
+              <span className="waste-entry__doc-count">{currentDoc.length} items</span>
             </div>
-          ) : (
-            <>
-              {/* Doc column headers */}
-              <div className="waste-entry__doc-col-header">
-                <span className="waste-entry__doc-col-name">Articolo</span>
-                <span className="waste-entry__doc-col-qty">Quantita'</span>
-              </div>
 
-              {/* Doc items */}
-              <div className="waste-entry__doc-items">
-                {currentDoc.map((item) => (
-                  <div key={item.articleId} className="waste-entry__doc-item">
-                    <div className="waste-entry__doc-item-name">
-                      {item.name}
-                    </div>
-                    <div className="waste-entry__doc-item-right">
-                      <input
-                        type="number"
-                        className="waste-entry__doc-qty-input"
-                        value={item.qty}
-                        onChange={(e) => handleQtyChange(item.articleId, e.target.value)}
-                        placeholder="0"
-                        min="0"
-                      />
-                      <button
-                        className="waste-entry__doc-remove"
-                        onClick={() => handleRemove(item.articleId)}
-                        title="Rimuovi"
-                      >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                          <line x1="18" y1="6" x2="6" y2="18"/>
-                          <line x1="6" y1="6" x2="18" y2="18"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                ))}
+            {currentDoc.length === 0 ? (
+              <div className="waste-entry__doc-empty">
+                <EmptyIcon />
+                <span>Nessun articolo aggiunto</span>
+                <span className="waste-entry__doc-empty-hint">
+                  Clicca un articolo a sinistra per aggiungerlo
+                </span>
               </div>
-            </>
-          )}
+            ) : (
+              <>
+                <div className="waste-entry__doc-col-header">
+                  <span className="waste-entry__doc-col-name">Articolo</span>
+                  <span className="waste-entry__doc-col-qty">Quantita'</span>
+                </div>
+                {/* scrollable items list */}
+                <div className="waste-entry__doc-scroll">
+                  {currentDoc.map((item) => (
+                    <div key={item.articleId} className="waste-entry__doc-item">
+                      <div className="waste-entry__doc-item-name">{item.name}</div>
+                      <div className="waste-entry__doc-item-right">
+                        <input
+                          type="number"
+                          className="waste-entry__doc-qty-input"
+                          value={item.qty}
+                          onChange={(e) => handleQtyChange(item.articleId, e.target.value)}
+                          placeholder="0"
+                          min="0"
+                        />
+                        <button
+                          className="waste-entry__doc-remove"
+                          onClick={() => handleRemove(item.articleId)}
+                          title="Rimuovi"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      <ActionBar onBack="/waste" onConfirm={() => alert('Scarto salvato')} />
+      <ActionBar onBack="/waste" onConfirm={handleConfirm} disabled={saving} />
     </div>
   );
 };

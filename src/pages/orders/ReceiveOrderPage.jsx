@@ -1,14 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ORDERS, ARTICLES } from '../../data/ordersData';
+import { confirmOrderReceive } from '../../services/api';
 import './orders.css';
 
-// ─── JSON-RPC stub (ready for Odoo integration) ──────────────────────────────
-// Replace with real rpc.call(model, method, args) when backend is available
-const api = {
-  fetchOrder:   async (id)     => ORDERS.find(o => o.id === Number(id)),
-  confirmReceive: async (/*payload*/) => { /* POST to /web/dataset/call_kw */ },
-};
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 function formatDate(iso) {
@@ -86,7 +81,7 @@ export default function ReceiveOrderPage() {
         unitCost:  item.unitCost,
       })),
     };
-    await api.confirmReceive(payload);
+    await confirmOrderReceive(payload);
     navigate('/orders');
   };
 

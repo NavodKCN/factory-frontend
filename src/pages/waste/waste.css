@@ -471,3 +471,83 @@
     max-width: 100%;
   }
 }
+
+/* Doc panel wrapper — makes the right side a proper flex column */
+.waste-entry__doc-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Scrollable items area inside the right doc panel */
+.waste-entry__doc-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* ── Mobile (≤ 768px) — stacked layout ─────────────────────────────── */
+@media (max-width: 768px) {
+  .waste-entry-page {
+    padding-bottom: 80px;
+  }
+
+  .waste-entry__split {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  .waste-entry__left {
+    border-right: none;
+    border-bottom: 2px solid #e0e0e0;
+    overflow: visible;
+    max-height: 50vh;
+    min-height: 200px;
+    overflow-y: auto;
+  }
+
+  .waste-entry__right {
+    width: 100%;
+    height: auto;
+    min-height: 280px;
+    overflow: visible;
+  }
+
+  .waste-entry__doc-panel {
+    height: auto;
+    overflow: visible;
+  }
+
+  .waste-entry__doc-scroll {
+    overflow: visible;
+    max-height: none;
+  }
+
+  .waste-entry__tabs {
+    padding: 8px 12px 0;
+    gap: 8px;
+  }
+
+  .waste-entry__tab {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* ── Mobile portrait (≤ 480px) ────────────────────────────────────── */
+@media (max-width: 480px) {
+  .waste-entry__article-name {
+    font-size: 12px;
+  }
+
+  .waste-entry__doc-item-name {
+    font-size: 12px;
+  }
+
+  .waste-entry__doc-qty-input {
+    width: 54px;
+    font-size: 13px;
+  }
+}

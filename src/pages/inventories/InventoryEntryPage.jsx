@@ -7,6 +7,7 @@ import {
   categories,
   formatDate,
 } from '../../data/mockData';
+import { saveInventoryItems } from '../../services/api';
 import PageHeader from '../../components/common/PageHeader';
 import ActionBar from '../../components/common/ActionBar';
 import './inventories.css';
@@ -15,7 +16,6 @@ const InventoryEntryPage = () => {
   const { id } = useParams();
   const inventory = inventories.find((i) => i.id === Number(id));
 
-  // Build item list — for inv 152 use real items, else build from articles
   const baseItems = id === '152'
     ? inventoryItems152
     : articles.slice(0, 20).map((a) => ({
@@ -29,10 +29,11 @@ const InventoryEntryPage = () => {
       }));
 
   const [items, setItems] = useState(baseItems);
-  const [categoryFilter, setCategoryFilter] = useState('-- REPARTO MP --');
-  const [semifinishedFilter, setSemifinishedFilter] = useState('-- SEMILAVORATO --');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [semifinishedFilter, setSemifinishedFilter] = useState('');
   const [search, setSearch] = useState('');
-  const [showKnownOnly, setShowKnownOnly] = useState(true);
+  const [showKnownOnly, setShowKnownOnly] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const handleQtyChange = (articleId, field, value) => {
     setItems((prev) =>
@@ -48,10 +49,23 @@ const InventoryEntryPage = () => {
     const matchSearch = !search ||
       item.name.toLowerCase().includes(search.toLowerCase()) ||
       item.code.toLowerCase().includes(search.toLowerCase());
-    const matchKnown = !showKnownOnly ||
-      item.ct !== null || item.sfuso !== null;
-    return matchSearch && matchKnown;
+    const matchCat = !categoryFilter || categoryFilter === '-- TUTTI --' ||
+      item.category === categoryFilter;
+    const matchKnown = !showKnownOnly || item.ct !== null || item.sfuso !== null;
+    return matchSearch && matchCat && matchKnown;
   });
+
+  // ── JSON-RPC stub ──────────────────────────────────────────────────────────
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const lines = items.map(i => ({ articleId: i.articleId, ct: i.ct, sfuso: i.sfuso }));
+      await saveInventoryItems(Number(id), lines);
+      alert('Inventario salvato');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!inventory) {
     return (
@@ -75,7 +89,7 @@ const InventoryEntryPage = () => {
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
         >
-          <option>-- REPARTO MP --</option>
+          <option value="">-- REPARTO MP --</option>
           {categories.map((c) => (
             <option key={c}>{c}</option>
           ))}
@@ -86,7 +100,7 @@ const InventoryEntryPage = () => {
           value={semifinishedFilter}
           onChange={(e) => setSemifinishedFilter(e.target.value)}
         >
-          <option>-- SEMILAVORATO --</option>
+          <option value="">-- SEMILAVORATO --</option>
           <option>SEMILAVORATO</option>
           <option>MATERIA PRIMA</option>
         </select>
@@ -107,7 +121,7 @@ const InventoryEntryPage = () => {
             checked={showKnownOnly}
             onChange={(e) => setShowKnownOnly(e.target.checked)}
           />
-          <span>Show only known items</span>
+          <span>Solo con quantità</span>
         </label>
       </div>
 
@@ -118,9 +132,9 @@ const InventoryEntryPage = () => {
             <thead className="data-table__head">
               <tr>
                 <th className="data-table__th">Articolo</th>
-                <th className="data-table__th" style={{ width: 100, textAlign: 'center' }}>UMxCT</th>
-                <th className="data-table__th" style={{ width: 100, textAlign: 'center' }}>CT</th>
-                <th className="data-table__th" style={{ width: 100, textAlign: 'center' }}>Sfuso</th>
+                <th className="data-table__th inv-entry__th-narrow">UMxCT</th>
+                <th className="data-table__th inv-entry__th-narrow">CT</th>
+                <th className="data-table__th inv-entry__th-narrow">Sfuso</th>
               </tr>
             </thead>
             <tbody>
@@ -137,10 +151,10 @@ const InventoryEntryPage = () => {
                       <div className="inv-entry__article-name">{item.name}</div>
                       <div className="inv-entry__article-code">{item.code}</div>
                     </td>
-                    <td className="data-table__td" style={{ textAlign: 'center' }}>
+                    <td className="data-table__td inv-entry__td-center">
                       <span className="inv-entry__umxct">{item.umxct}</span>
                     </td>
-                    <td className="data-table__td" style={{ textAlign: 'center' }}>
+                    <td className="data-table__td inv-entry__td-center">
                       <input
                         type="number"
                         className="inv-entry__qty-input"
@@ -151,7 +165,7 @@ const InventoryEntryPage = () => {
                         step="1"
                       />
                     </td>
-                    <td className="data-table__td" style={{ textAlign: 'center' }}>
+                    <td className="data-table__td inv-entry__td-center">
                       <input
                         type="number"
                         className="inv-entry__qty-input"
@@ -170,7 +184,7 @@ const InventoryEntryPage = () => {
         </div>
       </div>
 
-      <ActionBar onBack="/inventories" onConfirm={() => alert('Inventario salvato')} />
+      <ActionBar onBack="/inventories" onConfirm={handleSave} disabled={saving} />
     </div>
   );
 };

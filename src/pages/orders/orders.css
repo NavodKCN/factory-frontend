@@ -1016,3 +1016,157 @@
     padding: 0 8px 16px;
   }
 }
+
+/* Date input inside filter bar */
+.filter-input--date {
+  min-width: 130px;
+  width: 140px;
+  cursor: pointer;
+}
+
+/* Loading / empty state */
+.orders-loading {
+  padding: 32px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+/* Empty cell in table */
+.orders-table__empty {
+  text-align: center;
+  color: #bbb;
+  padding: 32px !important;
+  font-size: 13px;
+}
+
+/* Clear-filter button */
+.btn-clear-filter {
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #fff8f8;
+  color: #c62828;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.btn-clear-filter:hover {
+  background: #fce4e4;
+}
+
+/* Desktop: show table, hide cards */
+.orders-table-wrapper--desktop {
+  display: block;
+}
+
+.orders-card-list {
+  display: none;
+}
+
+/* ── Mobile card view ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .orders-table-wrapper--desktop {
+    display: none;
+  }
+
+  .orders-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 12px 80px;
+  }
+
+  .order-card {
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    padding: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: box-shadow 0.15s, border-color 0.15s;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .order-card:hover {
+    box-shadow: 0 3px 10px rgba(0,0,0,0.09);
+    border-color: #c8e6c9;
+  }
+
+  .order-card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .order-card__supplier {
+    font-weight: 700;
+    font-size: 14px;
+    color: #1a1a1a;
+  }
+
+  .order-card__row,
+  .order-card__ddt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: #444;
+  }
+
+  .order-card__label {
+    font-size: 10px;
+    font-weight: 600;
+    color: #999;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .order-card__num {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    color: #2e7d32;
+  }
+
+  .order-card__value {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: #1b5e20;
+  }
+
+  .order-card__date {
+    font-size: 11px;
+    color: #888;
+  }
+
+  .order-card__actions {
+    display: flex;
+    gap: 8px;
+    padding-top: 4px;
+    border-top: 1px solid #f5f5f5;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-input--date {
+    min-width: 110px;
+    width: 120px;
+    font-size: 12px;
+  }
+
+  .orders-card-list {
+    padding: 8px 8px 80px;
+    gap: 8px;
+  }
+
+  .order-card {
+    padding: 12px;
+  }
+}

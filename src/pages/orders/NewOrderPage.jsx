@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ARTICLES, SUPPLIERS } from '../../data/ordersData';
+import { createOrder } from '../../services/api';
 import './orders.css';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -20,8 +21,9 @@ export default function NewOrderPage() {
   const [deliveryDate, setDeliveryDate] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [search, setSearch] = useState('');
-  const [orderItems, setOrderItems] = useState([]); // [{ articleId, units }]
-  const [pendingQty, setPendingQty] = useState({}); // articleId -> input value string
+  const [orderItems, setOrderItems] = useState([]);   // [{ articleId, units }]
+  const [pendingQty, setPendingQty] = useState({});   // articleId -> input value string
+  const [saving, setSaving] = useState(false);
 
   // Articles filtered by supplier + category + search
   const supplierArticles = useMemo(() => {
@@ -56,6 +58,21 @@ export default function NewOrderPage() {
   const orderTotal = orderItems.reduce((sum, item) => sum + calcLineTotal(item, ARTICLES), 0);
 
   const getArticle = id => ARTICLES.find(a => a.id === id);
+
+  // ── JSON-RPC stub ──────────────────────────────────────────────────────────
+  async function handleConfirm() {
+    setSaving(true);
+    try {
+      await createOrder({
+        supplierId: Number(supplierId),
+        deliveryDate,
+        lines: orderItems.map(i => ({ articleId: i.articleId, units: i.units })),
+      });
+      navigate('/orders');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <div className="page-root page-root--split">
@@ -174,48 +191,56 @@ export default function NewOrderPage() {
               <span>Valore totale: <strong>{orderTotal.toLocaleString('it-IT', { minimumFractionDigits: 2 })} EUR</strong></span>
             </div>
 
-            {orderItems.length > 0 && (
-              <table className="doc-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Articolo</th>
-                    <th>Unità</th>
-                    <th>Pack</th>
-                    <th>Valore</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orderItems.map((item, idx) => {
-                    const art = getArticle(item.articleId);
-                    if (!art) return null;
-                    const total = calcLineTotal(item, ARTICLES);
-                    return (
-                      <tr key={item.articleId}>
-                        <td>{idx + 1}</td>
-                        <td className="doc-table__art-name">{art.code} {art.name}</td>
-                        <td className="doc-table__qty">{item.units}</td>
-                        <td>{art.pack}</td>
-                        <td className="doc-table__val">{total.toFixed(2)}</td>
-                        <td>
-                          <button className="remove-btn" onClick={() => removeItem(item.articleId)}>✕</button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td colSpan={4} className="doc-table__total-label">Totale</td>
-                    <td className="doc-table__total-val">{orderTotal.toFixed(2)}</td>
-                    <td></td>
-                  </tr>
-                </tfoot>
-              </table>
-            )}
-
-            {orderItems.length === 0 && (
+            {orderItems.length > 0 ? (
+              <div className="doc-panel__scroll">
+                <table className="doc-table">
+                  <colgroup>
+                    <col className="col-num" />
+                    <col className="col-art" />
+                    <col className="col-unit" />
+                    <col style={{ width: 40 }} />
+                    <col className="col-tot" />
+                    <col style={{ width: 28 }} />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th className="th-art">Articolo</th>
+                      <th>Unità</th>
+                      <th>Pack</th>
+                      <th>Valore</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orderItems.map((item, idx) => {
+                      const art = getArticle(item.articleId);
+                      if (!art) return null;
+                      const total = calcLineTotal(item, ARTICLES);
+                      return (
+                        <tr key={item.articleId}>
+                          <td>{idx + 1}</td>
+                          <td className="doc-table__art-name">{art.code} {art.name.substring(0, 14)}{art.name.length > 14 ? '…' : ''}</td>
+                          <td className="doc-table__qty">{item.units}</td>
+                          <td>{art.pack}</td>
+                          <td className="doc-table__val">{total.toFixed(2)}</td>
+                          <td>
+                            <button className="remove-btn" onClick={() => removeItem(item.articleId)}>✕</button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colSpan={4} className="doc-table__total-label">Totale</td>
+                      <td className="doc-table__total-val">{orderTotal.toFixed(2)}</td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            ) : (
               <div className="doc-panel__empty">Aggiungi articoli dall'elenco a sinistra.</div>
             )}
           </div>
@@ -227,8 +252,8 @@ export default function NewOrderPage() {
         <button className="action-bar__back" onClick={() => navigate('/orders')}>←</button>
         <button
           className="action-bar__confirm"
-          disabled={orderItems.length === 0}
-          onClick={() => navigate('/orders')}
+          disabled={orderItems.length === 0 || saving}
+          onClick={handleConfirm}
           title="Conferma ordine"
         >
           ✓
